@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pomodoro Timer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a2e;
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: #16213e;
+            border-radius: 24px;
+            padding: 40px;
+            width: 90%;
+            max-width: 480px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .timer-display {
+            text-align: center;
+            font-size: 4.5rem;
+            font-weight: 300;
+            letter-spacing: 4px;
+            color: #f0f0f0;
+            margin-bottom: 30px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .phase-label {
+            text-align: center;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: #a0a0b8;
+            margin-bottom: 10px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .btn {
+            background: #0f3460;
+            border: none;
+            color: #e0e0e0;
+            padding: 12px 28px;
+            border-radius: 40px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            letter-spacing: 1px;
+        }
+
+        .btn:hover {
+            background: #1a4a7a;
+            transform: scale(1.02);
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary {
+            background: #e94560;
+            color: #fff;
+            padding: 12px 40px;
+        }
+
+        .btn-primary:hover {
+            background: #ff6b7f;
+        }
+
+        .btn-reset {
+            background: transparent;
+            border: 1px solid #3a3a5c;
+        }
+
+        .btn-reset:hover {
+            background: #2a2a4c;
+        }
+
+        .sound-section {
+            margin-top: 10px;
+        }
+
+        .sound-section h3 {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #7a7a9a;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .sound-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .sound-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #1a1a3a;
+            padding: 10px 16px;
+            border-radius: 12px;
+            transition: background 0.2s;
+        }
+
+        .sound-item.active {
+            background: #2a2a5a;
+        }
+
+        .sound-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.95rem;
+        }
+
+        .sound-label .icon {
+            font-size: 1.2rem;
+        }
+
+        .sound-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .sound-toggle {
+            background: none;
+            border: 1px solid #4a4a6a;
+            color: #e0e0e0;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .sound-toggle.active {
+            background: #e94560;
+            border-color: #e94560;
+        }
+
+        .sound-toggle:hover {
+            background: #3a3a5a;
+        }
+
+        .sound-toggle.active:hover {
+            background: #ff6b7f;
+        }
+
+        .volume-slider {
+            width: 80px;
+            height: 4px;
+            -webkit-appearance: none;
+            background: #3a3a5c;
+            border-radius: 4px;
+            outline: none;
+        }
+
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #e94560;
+            cursor: pointer;
+        }
+
+        .volume-slider::-moz-range-thumb {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #e94560;
+            cursor: pointer;
+            border: none;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 0.7rem;
+            color: #5a5a7a;
+            letter-spacing: 1px;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 24px;
+                border-radius: 16px;
+            }
+            .timer-display {
+                font-size: 3.2rem;
+            }
+            .controls {
+                gap: 10px;
+            }
+            .btn {
+                padding: 10px 20px;
+                font-size: 0.85rem;
+            }
+            .btn-primary {
+                padding: 10px 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="phase-label" id="phaseLabel">Focus</div>
+        <div class="timer-display" id="timerDisplay">25:00</div>
+        <div class="controls">
+            <button class="btn btn-primary" id="mainBtn">Start</button>
+            <button class="btn btn-reset" id="resetBtn">Reset</button>
+        </div>
+        <div class="sound-section">
+            <h3>Ambient Sounds</h3>
+            <div class="sound-grid">
+                <div class="sound-item" data-sound="rain">
+                    <span class="sound-label"><span class="icon">🌧️</span> Rain</span>
+                    <div class="sound-controls">
+                        <input type="range" class="volume-slider" min="0" max="1" step="0.01" value="0.5">
+                        <button class="sound-toggle">▶</button>
+                    </div>
+                </div>
+                <div class="sound-item" data-sound="forest">
+                    <span class="sound-label"><span class="icon">🌲</span> Forest</span>
+                    <div class="sound-controls">
+                        <input type="range" class="volume-slider" min="0" max="1" step="0.01" value="0.5">
+                        <button class="sound-toggle">▶</button>
+                    </div>
+                </div>
+                <div class="sound-item" data-sound="cafe">
+                    <span class="sound-label"><span class="icon">☕</span> Cafe</span>
+                    <div class="sound-controls">
+                        <input type="range" class="volume-slider" min="0" max="1" step="0.01" value="0.5">
+                        <button class="sound-toggle">▶</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="footer">Pomodoro Timer · Dark Focus</div>
+    </div>
+
+    <script>
+        (function() {
+            // ---------- Audio Engine ----------
+            let audioContext = null;
+            const soundBuffers = {};
+            const soundSources = {};
+            const soundGains = {};
+            const soundPlaying = {};
+
+            function initAudioContext() {
+                if (!audioContext) {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            }
+
+            // Generate synthetic sounds using oscillators and noise
+            function generateSound(type) {
+                const sampleRate = audioContext.sampleRate;
+                const duration = 4.0; // seconds, looped
+                const length = sampleRate * duration;
+                const buffer = audioContext.createBuffer(1, length, sampleRate);
+                const data = buffer.getChannelData(0);
+
+                if (type === 'rain') {
+                    // Pink noise with modulations
+                    let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+                    for (let i = 0; i < length; i++) {
+                        const white = Math.random() * 2 - 1;
+                        b0 = 0.99886 * b0 + white * 0.0555179;
+                        b1 = 0.99332 * b1 + white * 0.0750759;
+                        b2 = 0.96900 * b2 + white * 0.1538520;
+                        b3 = 0.86650 * b3 + white * 0.3104856;
+                        b4 = 0.55000 * b4 + white * 0.5329522;
+                        b5 = -0.7616 * b5 - white * 0.0168980;
+                        const pink = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.11;
+                        b6 = white * 0.115926;
+                        // Add amplitude modulation for rain texture
+                        const mod = 0.5 + 0.5 * Math.sin(i * 0.003);
+                        data[i] = pink * mod * 0.4;
+                    }
+                } else if (type === 'forest') {
+                    // Gentle wind + bird-like chirps
+                    for (let i = 0; i < length; i++) {
+                        const t = i / sampleRate;
+                        // Wind noise (filtered noise)
+                        const noise = Math.random() * 2 - 1;
+                        const wind = noise * 0.3;
+                        // Bird chirps (sparse high-frequency tones)
+                        let chirp = 0;
+                        const chirpTrigger = Math.sin(t * 1.7) * 0.5 + 0.5;
+                        if (chirpTrigger > 0.98) {
+                            const freq = 2000 + Math.random() * 1500;
+                            const chirpDuration = 0.05 + Math.random() * 0.1;
+                            const env = Math.max(0, 1 - (t % 0.6) / chirpDuration);
+                            chirp = Math.sin(2 * Math.PI * freq * t) * env * 0.3;
+                        }
+                        data[i] = wind + chirp;
+                    }
+                } else if (type === 'cafe') {
+                    // Muffled chatter and clatter
+                    for (let i = 0; i < length; i++) {
+                        const t = i / sampleRate;
+                        // Low rumble (people talking)
+                        const talk = Math.sin(2 * Math.PI * 120 * t) * 0.1 +
+                                     Math.sin(2 * Math.PI * 180 * t) * 0.08;
+                        // Random clatter
+                        let clatter = 0;
+                        const clickRate = 0.3;
+                        if (Math.random() < clickRate / sampleRate) {
+                            clatter = (Math.random() * 2 - 1) * 0.5;
+                        }
+                        // Background noise
+                        const noise = (Math.random() * 2 - 1) * 0.05;
+                        data[i] = talk + clatter + noise;
+                    }
+                }
+                return buffer;
+            }
+
+            function loadSounds() {
+                const types = ['rain', 'forest', 'cafe'];
+                types.forEach(type => {
+                    const buffer = generateSound(type);
+                    soundBuffers[type] = buffer;
+                });
+            }
+
+            function playSound(type, gainValue) {
+                if (!audioContext) return;
+                if (soundSources[type]) {
+                    stopSound(type);
+                }
+                const source = audioContext.createBufferSource();
+                source.buffer = soundBuffers[type];
+                source.loop = true;
+
+                const gainNode = audioContext.createGain();
+                gainNode.gain.value = gainValue || 0.5;
+
+                source.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                source.start(0);
+
+                soundSources[type] = source;
+                soundGains[type] = gainNode;
+                soundPlaying[type] = true;
+            }
+
+            function stopSound(type) {
+                if (soundSources[type]) {
+                    try {
+                        soundSources[type].stop();
+                    } catch(e) {}
+                    soundSources[type].disconnect();
+                    soundSources[type] = null;
+                }
+                if (soundGains[type]) {
+                    soundGains[type].disconnect();
+                    soundGains[type] = null;
+                }
+                soundPlaying[type] = false;
+            }
+
+            function setVolume(type, vol) {
+                if (soundGains[type]) {
+                    soundGains[type].gain.value = vol;
+                }
+            }
+
+            // ---------- Timer State ----------
+            const FOCUS_TIME = 25 * 60;
+            const SHORT_BREAK = 5 * 60;
+            const LONG_BREAK = 15 * 60;
+
+            let timerState = {
+                phase: 'focus', // 'focus', 'shortBreak', 'longBreak'
+                timeLeft: FOCUS_TIME,
+                isRunning: false,
+                isPaused: false,
+                intervalId: null,
+                focusCount: 0,
+            };
+
+            const timerDisplay = document.getElementById('timerDisplay');
+            const phaseLabel = document.getElementById('phaseLabel');
+            const mainBtn = document.getElementById('mainBtn');
+            const resetBtn = document.getElementById('resetBtn');
+
+            function formatTime(seconds) {
+                const m = Math.floor(seconds / 60);
+                const s = seconds % 60;
+                return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+            }
+
+            function updateDisplay() {
+                timerDisplay.textContent = formatTime(timerState.timeLeft);
+                switch(timerState.phase) {
+                    case 'focus': phaseLabel.textContent = 'Focus'; break;
+                    case 'shortBreak': phaseLabel.textContent = 'Short Break'; break;
+                    case 'longBreak': phaseLabel.textContent = 'Long Break'; break;
+                }
+            }
+
+            function getPhaseTime(phase) {
+                if (phase === 'focus') return FOCUS_TIME;
+                if (phase === 'shortBreak') return SHORT_BREAK;
+                if (phase === 'longBreak') return LONG_BREAK;
+                return FOCUS_TIME;
+            }
+
+            function switchPhase(newPhase) {
+                timerState.phase = newPhase;
+                timerState.timeLeft = getPhaseTime(newPhase);
+                timerState.isRunning = false;
+                timerState.isPaused = false;
+                if (timerState.intervalId) {
+                    clearInterval(timerState.intervalId);
+                    timerState.intervalId = null;
+                }
+                mainBtn.textContent = 'Start';
+                updateDisplay();
+                saveSettings();
+            }
+
+            function tick() {
+                if (timerState.timeLeft <= 1) {
+                    // Time's up
+                    timerState.timeLeft = 0;
+                    updateDisplay();
+                    clearInterval(timerState.intervalId);
+                    timerState.intervalId = null;
+                    timerState.isRunning = false;
+                    timerState.isPaused = false;
+                    mainBtn.textContent = 'Start';
+                    
+                    // Auto switch phase
+                    if (timerState.phase === 'focus') {
+                        timerState.focusCount++;
+                        if (timerState.focusCount % 4 === 0) {
+                            switchPhase('longBreak');
+                        } else {
+                            switchPhase('shortBreak');
+                        }
+                    } else {
+                        // After any break, go back to focus
+                        switchPhase('focus');
+                    }
+                    updateDisplay();
+                    saveSettings();
+                    return;
+                }
+                timerState.timeLeft--;
+                updateDisplay();
+            }
+
+            function startTimer() {
+                if (timerState.isRunning) return;
+                initAudioContext();
+                if (timerState.timeLeft <= 0) {
+                    // Reset to phase start
+                    timerState.timeLeft = getPhaseTime(timerState.phase);
+                }
+                timerState.isRunning = true;
+                timerState.isPaused = false;
+                mainBtn.textContent = 'Pause';
+                if (timerState.intervalId) clearInterval(timerState.intervalId);
+                timerState.intervalId = setInterval(tick, 1000);
+                saveSettings();
+            }
+
+            function pauseTimer() {
+                if (!timerState.isRunning) return;
+                clearInterval(timerState.intervalId);
+                timerState.intervalId = null;
+                timerState.isRunning = false;
+                timerState.isPaused = true;
+                mainBtn.textContent = 'Resume';
+                saveSettings();
+            }
+
+            function resetTimer() {
+                clearInterval(timerState.intervalId);
+                timerState.intervalId = null;
+                timerState.isRunning = false;
+                timerState.isPaused = false;
+                timerState.timeLeft = getPhaseTime(timerState.phase);
+                mainBtn.textContent = 'Start';
+                updateDisplay();
+                saveSettings();
+            }
+
+            function mainBtnHandler() {
+                if (timerState.isRunning) {
+                    pauseTimer();
+                } else {
+                    startTimer();
+                }
+            }
+
+            // ---------- Sound UI ----------
+            const soundItems = document.querySelectorAll('.sound-item');
+            soundItems.forEach(item => {
+                const type = item.dataset.sound;
+                const toggleBtn = item.querySelector('.sound-toggle');
+                const volumeSlider = item.querySelector('.volume-slider');
+
+                // Load saved state
+                const saved = localStorage.getItem(`sound_${type}`);
+                if (saved) {
+                    try {
+                        const data
